@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MindPlay Arcade</title>
+  <meta name="description" content="Free brain games for Class 3 to 8: planning puzzles set in real Indian places.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/portal.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap brand-row">
+      <a class="logo" href="#home" aria-label="Home">
+        <svg viewBox="0 0 40 40" aria-hidden="true">
+          <rect x="2" y="2" width="36" height="36" rx="10" fill="#ffb703"/>
+          <circle cx="26" cy="26" r="7" fill="#0b4145"/>
+          <rect x="9" y="9" width="11" height="11" rx="3" fill="#f25c2a"/>
+          <path d="M20 14.5h6v5" stroke="#0b4145" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>
+        <span><span data-site-name>MindPlay Arcade</span><small>Brain games for Class 3–8</small></span>
+      </a>
+      <form class="search" id="searchForm" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4a6 6 0 1 1 0 12 6 6 0 0 1 0-12zm0-2a8 8 0 1 0 4.9 14.3l5.4 5.4 1.4-1.4-5.4-5.4A8 8 0 0 0 10 2z"/></svg>
+        <input id="search" type="search" placeholder="Search games" aria-label="Search games" autocomplete="off">
+      </form>
+    </div>
+    <div class="cat-bar-wrap">
+      <nav class="wrap cat-bar" id="catBar" aria-label="Categories"></nav>
+    </div>
+  </header>
+
+  <main class="wrap" id="view"></main>
+
+  <footer class="site-footer">
+    <div class="wrap foot-grid">
+      <nav class="foot-nav" id="footNav" aria-label="Footer"></nav>
+      <p class="foot-note">© <span data-site-year>2026</span> <span data-site-name>MindPlay Arcade</span> · Games made with Phaser 3 · Progress is saved only in this browser.</p>
+    </div>
+  </footer>
+
+  <script src="js/Catalog.js"></script>
+  <script src="js/ResultStore.js"></script>
+  <script src="js/TileView.js"></script>
+  <script src="js/HomeView.js"></script>
+  <script src="js/CategoryView.js"></script>
+  <script src="js/GameView.js"></script>
+  <script src="js/Router.js"></script>
+  <script src="js/PortalApp.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Fill the Holes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
+
+  <!-- config -->
+  <script src="js/config/GameConfig.js"></script>
+  <script src="js/config/DifficultyTable.js"></script>
+
+  <!-- core (no Phaser dependency) -->
+  <script src="js/core/SeededRandom.js"></script>
+  <script src="js/core/SafeStorage.js"></script>
+  <script src="js/core/PuzzleLayout.js"></script>
+  <script src="js/core/BoardState.js"></script>
+  <script src="js/core/PuzzleSolver.js"></script>
+  <script src="js/core/LevelPicker.js"></script>
+  <script src="js/core/DifficultyManager.js"></script>
+  <script src="js/core/MetricsTracker.js"></script>
+  <script src="js/core/SoundFX.js"></script>
+  <script src="js/core/TextureFactory.js"></script>
+
+  <!-- themes (real-life stories around the same puzzle) -->
+  <script src="js/themes/BaseTheme.js"></script>
+  <script src="js/themes/PotholeTheme.js"></script>
+  <script src="js/themes/KancheTheme.js"></script>
+  <script src="js/themes/FieldsTheme.js"></script>
+  <script src="js/themes/ParkingTheme.js"></script>
+  <script src="js/themes/ThemeRegistry.js"></script>
+
+  <!-- objects -->
+  <script src="js/objects/TextButton.js"></script>
+  <script src="js/objects/CrateSprite.js"></script>
+  <script src="js/objects/ArrowPad.js"></script>
+  <script src="js/objects/HudBar.js"></script>
+  <script src="js/objects/LevelCompletePanel.js"></script>
+
+  <!-- scenes -->
+  <script src="js/scenes/BootScene.js"></script>
+  <script src="js/scenes/MenuScene.js"></script>
+  <script src="js/scenes/GameScene.js"></script>
+  <script src="js/scenes/SummaryScene.js"></script>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
