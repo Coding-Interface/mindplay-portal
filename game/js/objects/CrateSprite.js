@@ -10,9 +10,14 @@ class CrateSprite extends Phaser.GameObjects.Container {
     this.color = box.color;
     this.cell = cell;
 
-    this.ring = scene.add.image(0, 0, theme.key('select')).setDisplaySize(cell * 1.08, cell * 1.08).setVisible(false);
+    // selection look: a glowing pad under the piece and a pulsing glow over it
+    this.glowSize = Math.round(cell * 0.86);
+    this.glowRadius = CrateSprite.ROUND[theme.id] ? this.glowSize / 2 : Math.round(cell * 0.2);
+    this.halo = scene.add.image(0, 0, '__DEFAULT').setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
     this.crateImg = scene.add.image(0, 0, theme.key('crate' + box.color)).setDisplaySize(cell * 0.96, cell * 0.96);
-    this.add([this.ring, this.crateImg]);
+    this.flash = scene.add.image(0, 0, theme.key('crate' + box.color)).setDisplaySize(cell * 0.96, cell * 0.96)
+      .setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
+    this.add([this.halo, this.crateImg, this.flash]);
 
     this.setSize(cell, cell);
     this.setInteractive({ useHandCursor: true });
@@ -20,15 +25,17 @@ class CrateSprite extends Phaser.GameObjects.Container {
   }
 
   setSelected(on) {
-    this.ring.setVisible(on);
-    if (this.ringTween) {
-      this.ringTween.stop();
-      this.ringTween = null;
-    }
-    this.ring.setAlpha(1);
-    if (on) {
-      this.ringTween = this.scene.tweens.add({ targets: this.ring, alpha: 0.35, duration: 500, yoyo: true, repeat: -1 });
-    }
+    if (this.glowTweens) { this.glowTweens.forEach(t => t.stop()); this.glowTweens = null; }
+    this.halo.setVisible(on);
+    this.flash.setVisible(on);
+    if (!on) return;
+    const h = GlowFx.halo(this.scene, this.glowSize, this.glowSize, GlowFx.SELECT, this.glowRadius);
+    this.halo.setTexture(h.key).setDisplaySize(this.glowSize + h.pad * 2, this.glowSize + h.pad * 2).setAlpha(0.95);
+    this.flash.setTintFill(GlowFx.SELECT).setAlpha(0.12);
+    this.glowTweens = [
+      this.scene.tweens.add({ targets: this.halo, alpha: 0.45, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
+      this.scene.tweens.add({ targets: this.flash, alpha: 0.42, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
+    ];
   }
 
   /** Slide through a list of points [{x,y}], then call done(). */
@@ -82,3 +89,6 @@ class CrateSprite extends Phaser.GameObjects.Container {
     });
   }
 }
+
+/** Themes whose pieces are round (marbles, water drops): the glow is a circle. */
+CrateSprite.ROUND = { kanche: true, fields: true };

@@ -18,7 +18,12 @@ class FillTheHolesGame {
 }
 
 window.addEventListener('load', () => {
-  const go = () => FillTheHolesGame.start();
+  // the rotate overlay works even while the game is still loading
+  window.orientationGuard = new OrientationGuard(GameConfig.ORIENTATION);
+  const go = () => {
+    FillTheHolesGame.start();
+    window.orientationGuard.attach(window.fillTheHoles);
+  };
   if (document.fonts && document.fonts.load) {
     Promise.race([
       document.fonts.load('700 32px "Baloo 2"'),

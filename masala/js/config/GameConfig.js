@@ -6,6 +6,8 @@ class GameConfig {}
 
 GameConfig.WIDTH = 1280;
 GameConfig.HEIGHT = 720;
+/** Orientation the game supports on phones and tablets ('landscape' or 'portrait'). */
+GameConfig.ORIENTATION = 'landscape';
 GameConfig.FONT = '"Baloo 2", "Trebuchet MS", Arial, sans-serif';
 GameConfig.LEVELS_PER_SESSION = 10;
 GameConfig.LEVEL_BANK_URL = 'data/levels.json';

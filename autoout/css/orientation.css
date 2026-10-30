@@ -1,0 +1,98 @@
+/* "Turn your device" overlay, shown by js/core/OrientationGuard.js */
+
+.rotate-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(circle at 50% 40%, #2f4656 0%, #121a20 75%);
+  color: #ffffff;
+  font-family: "Baloo 2", "Trebuchet MS", Arial, sans-serif;
+  text-align: center;
+  touch-action: none;
+}
+
+.rotate-overlay[hidden] {
+  display: none;
+}
+
+.rotate-card {
+  max-width: 340px;
+}
+
+/* a phone that turns from upright to sideways */
+.rotate-phone {
+  position: relative;
+  width: 74px;
+  height: 128px;
+  margin: 0 auto 28px;
+  border: 6px solid #ffd23f;
+  border-radius: 16px;
+  background: rgba(255, 210, 63, 0.12);
+  box-shadow: 0 0 28px rgba(255, 210, 63, 0.45);
+  animation: rotate-phone 2.4s ease-in-out infinite;
+}
+
+.rotate-phone::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  width: 22px;
+  height: 4px;
+  margin-left: -11px;
+  border-radius: 2px;
+  background: #ffd23f;
+}
+
+.rotate-phone::after {
+  content: "";
+  position: absolute;
+  bottom: 7px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  border: 2px solid #ffd23f;
+}
+
+.rotate-title {
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.rotate-note {
+  margin: 0;
+  font-size: 18px;
+  color: #c9d6de;
+}
+
+@keyframes rotate-phone {
+  0%, 20% { transform: rotate(0deg); }
+  50%, 80% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* for a portrait-only game the phone turns the other way */
+.rotate-overlay.wants-portrait .rotate-phone {
+  animation-name: rotate-phone-back;
+}
+
+@keyframes rotate-phone-back {
+  0%, 20% { transform: rotate(-90deg); }
+  50%, 80% { transform: rotate(0deg); }
+  100% { transform: rotate(-90deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rotate-phone {
+    animation: none;
+    transform: rotate(-90deg);
+  }
+}

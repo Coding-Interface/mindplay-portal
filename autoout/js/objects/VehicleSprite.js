@@ -4,7 +4,7 @@
  * the front on the right; vertical vehicles are rotated 90° (front pointing down).
  * Knows its lane and converts between lane position and pixels for the
  * current lot (cell size changes with the lot size).
- * Has a soft shadow cast to the bottom-right, a glow ring for hints and drags,
+ * Has a soft shadow cast to the bottom-right, a game-style glow for drags and hints,
  * exhaust puffs when it moves, and a comic speech bubble ("PEEP PEEP!").
  */
 class VehicleSprite extends Phaser.GameObjects.Container {
@@ -28,8 +28,18 @@ class VehicleSprite extends Phaser.GameObjects.Container {
     }
     const bw = vehicle.horiz ? w : h;
     const bh = vehicle.horiz ? h : w;
-    this.ring = scene.add.rectangle(0, 0, bw + 6, bh + 6).setStrokeStyle(5, GameConfig.COLORS.accent, 1).setFillStyle(0, 0).setVisible(false);
-    this.add([this.shadow, this.ring, this.img]);
+    this.boxW = w;
+    this.boxH = h;
+    // selection look: a glowing pad under the vehicle and a pulsing glow over it
+    this.halo = scene.add.image(0, 0, '__DEFAULT').setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
+    this.flash = scene.add.image(0, 0, vehicle.kind).setDisplaySize(w, h).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
+    if (!vehicle.horiz) {
+      this.halo.setAngle(90);
+      this.flash.setAngle(90);
+    }
+    this.add([this.shadow, this.halo, this.img, this.flash]);
+    this.baseScaleX = this.img.scaleX;
+    this.baseScaleY = this.img.scaleY;
 
     this.setSize(bw, bh);
     this.setInteractive({ useHandCursor: true });
@@ -60,16 +70,28 @@ class VehicleSprite extends Phaser.GameObjects.Container {
     });
   }
 
-  setGlow(on) {
-    this.ring.setVisible(on);
-    if (this.glowTween) { this.glowTween.stop(); this.glowTween = null; }
-    this.ring.setAlpha(1);
-    if (on) this.glowTween = this.scene.tweens.add({ targets: this.ring, alpha: 0.3, duration: 400, yoyo: true, repeat: -1 });
+  /**
+   * Game-style highlight. color: GlowFx.SELECT (gold, picked up) or GlowFx.HINT (green).
+   */
+  setGlow(on, color) {
+    if (this.glowTweens) { this.glowTweens.forEach(t => t.stop()); this.glowTweens = null; }
+    this.halo.setVisible(on);
+    this.flash.setVisible(on);
+    if (!on) return;
+    const c = color || GlowFx.SELECT;
+    const h = GlowFx.halo(this.scene, this.boxW, this.boxH, c, Math.min(this.boxH * 0.3, 18));
+    this.halo.setTexture(h.key).setDisplaySize(this.boxW + h.pad * 2, this.boxH + h.pad * 2).setAlpha(0.9);
+    this.flash.setTintFill(c).setAlpha(0.15);
+    this.glowTweens = [
+      this.scene.tweens.add({ targets: this.halo, alpha: 0.45, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
+      this.scene.tweens.add({ targets: this.flash, alpha: 0.45, duration: 420, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' })
+    ];
   }
 
   /** Lift slightly while being dragged. */
   setLifted(on) {
-    this.scene.tweens.add({ targets: this.img, scale: this.img.scale * (on ? 1.04 : 1 / 1.04), duration: 90 });
+    const k = on ? 1.06 : 1;
+    this.scene.tweens.add({ targets: [this.img, this.flash], scaleX: this.baseScaleX * k, scaleY: this.baseScaleY * k, duration: 90 });
     this.shadow.setAlpha(on ? 0.42 : 0.32);
   }
 
@@ -121,7 +143,7 @@ class VehicleSprite extends Phaser.GameObjects.Container {
 
   destroy(fromScene) {
     if (this.bubble) this.bubble.destroy();
-    if (this.glowTween) this.glowTween.stop();
+    if (this.glowTweens) this.glowTweens.forEach(t => t.stop());
     super.destroy(fromScene);
   }
 }

@@ -187,7 +187,7 @@ class GameScene extends Phaser.Scene {
     this.updateMoves();
     this.busy = true;
     this.selected = null;
-    A.glow.setStrokeStyle(8, GameConfig.COLORS.accent, 0);
+    A.setGlow(false);
     A.setDepth(50);
     const dir = B.baseX >= A.baseX ? 1 : -1;
     const s = this.scaleNow;

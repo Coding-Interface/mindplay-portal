@@ -8,9 +8,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/orientation.css">
 </head>
 <body>
   <div id="game"></div>
+  <div id="rotate-overlay" class="rotate-overlay" role="alert" hidden>
+    <div class="rotate-card">
+      <div class="rotate-phone" aria-hidden="true"></div>
+      <h2 class="rotate-title">Please turn your device sideways</h2>
+      <p class="rotate-note">This game is played in landscape mode.</p>
+    </div>
+  </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
   <script src="js/config/GameConfig.js"></script>
   <script src="js/config/DifficultyTable.js"></script>
@@ -24,6 +32,7 @@
   <script src="js/core/MetricsTracker.js"></script>
   <script src="js/core/SoundFX.js"></script>
   <script src="js/objects/TextButton.js"></script>
+  <script src="js/objects/GlowFx.js"></script>
   <script src="js/objects/JarSprite.js"></script>
   <script src="js/objects/HudBar.js"></script>
   <script src="js/objects/RuleCard.js"></script>
@@ -32,6 +41,7 @@
   <script src="js/scenes/MenuScene.js"></script>
   <script src="js/scenes/GameScene.js"></script>
   <script src="js/scenes/SummaryScene.js"></script>
+  <script src="js/core/OrientationGuard.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

@@ -13,16 +13,24 @@ class JarSprite extends Phaser.GameObjects.Container {
     this.baseY = y;
     this.h = J.heights[capacity];
 
-    this.glow = scene.add.rectangle(0, this.h / 2 + 6, J.w - 10, this.h - 10, GameConfig.COLORS.accent, 0).setStrokeStyle(8, GameConfig.COLORS.accent, 0);
+    // visible glass (the art has a transparent margin): x -66..66, y 24..h-10
+    this.glassW = 132;
+    this.glassH = this.h - 34;
+    this.glassY = 24 + this.glassH / 2;
+    // selection look: a glowing pad behind the jar and a pulsing glow filled over the glass
+    this.halo = scene.add.image(0, this.glassY, '__DEFAULT').setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
     this.back = scene.add.image(0, 0, 'jar' + capacity + '_back').setOrigin(0.5, 0);
     this.scoopLayer = scene.add.container(0, 0);
     this.front = scene.add.image(0, 0, 'jar' + capacity + '_front').setOrigin(0.5, 0);
-    this.add([this.glow, this.back, this.scoopLayer, this.front]);
+    this.flash = scene.add.image(0, 0, 'jar' + capacity + '_front').setOrigin(0.5, 0).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
+    this.add([this.halo, this.back, this.scoopLayer, this.front, this.flash]);
 
     this.setScale(scale);
     this.setSize(J.w, this.h);
-    // hit area covers the whole jar (container size is centred on its origin)
-    this.setInteractive(new Phaser.Geom.Rectangle(-J.w / 2, 0, J.w, this.h), Phaser.Geom.Rectangle.Contains);
+    // Hit area covers the whole jar. Phaser tests a sized container's hit area
+    // from its top-left corner (local point + width/2, height/2). This jar's
+    // origin is its top-centre, so the jar spans x 0..w and y h/2..3h/2 there.
+    this.setInteractive(new Phaser.Geom.Rectangle(0, this.h / 2, J.w, this.h), Phaser.Geom.Rectangle.Contains);
     this.input.cursor = 'pointer';
     scene.add.existing(this);
   }
@@ -44,7 +52,29 @@ class JarSprite extends Phaser.GameObjects.Container {
 
   setSelected(on) {
     this.scene.tweens.add({ targets: this, y: this.baseY - (on ? 26 : 0), duration: 140, ease: 'Sine.easeOut' });
-    this.glow.setStrokeStyle(8, GameConfig.COLORS.accent, on ? 0.9 : 0);
+    this.setGlow(on, GlowFx.SELECT);
+  }
+
+  /**
+   * Game-style highlight: halo behind the jar plus a pulsing glow over the glass.
+   * repeat: -1 to keep pulsing until switched off, or a count for a short flash.
+   */
+  setGlow(on, color, repeat, done) {
+    if (this.glowTweens) { this.glowTweens.forEach(t => t.stop()); this.glowTweens = null; }
+    this.halo.setVisible(on);
+    this.flash.setVisible(on);
+    if (!on) return;
+    const h = GlowFx.halo(this.scene, this.glassW, this.glassH, color, 26);
+    this.halo.setTexture(h.key).setDisplaySize(this.glassW + h.pad * 2, this.glassH + h.pad * 2).setAlpha(0.95);
+    this.flash.setTintFill(color).setAlpha(0.12);
+    const rep = repeat === undefined ? -1 : repeat;
+    this.glowTweens = [
+      this.scene.tweens.add({ targets: this.halo, alpha: 0.45, duration: 380, yoyo: true, repeat: rep, ease: 'Sine.easeInOut' }),
+      this.scene.tweens.add({
+        targets: this.flash, alpha: 0.4, duration: 380, yoyo: true, repeat: rep, ease: 'Sine.easeInOut',
+        onComplete: () => { if (rep >= 0) { this.setGlow(false); if (done) done(); } }
+      })
+    ];
   }
 
   /** Shake sideways when a pour is not allowed. */
@@ -55,13 +85,9 @@ class JarSprite extends Phaser.GameObjects.Container {
     });
   }
 
-  /** Glow pulse used by hints. */
+  /** Green flash used by hints (unless the jar is already picked up). */
   pulse() {
-    this.glow.setStrokeStyle(8, 0x9be15d, 1);
-    this.scene.tweens.add({
-      targets: this.glow, alpha: { from: 1, to: 0.2 }, duration: 260, yoyo: true, repeat: 3,
-      onComplete: () => { this.glow.setAlpha(1); this.glow.setStrokeStyle(8, GameConfig.COLORS.accent, 0); }
-    });
+    this.setGlow(true, GlowFx.HINT, 2, () => { if (this.scene.selected === this.index) this.setGlow(true, GlowFx.SELECT); });
   }
 
   /** Mouth position (where spice comes out) in world coordinates, for the pour stream. */

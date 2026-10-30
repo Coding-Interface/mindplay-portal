@@ -141,7 +141,7 @@ class GameScene extends Phaser.Scene {
         sprite: obj, id: v.id, horiz: v.horiz, start: v.horiz ? obj.x : obj.y,
         pointer0: v.horiz ? pointer.x : pointer.y, back: r.back, fwd: r.fwd, moved: false, hit: false
       };
-      obj.setGlow(true);
+      obj.setGlow(true, GlowFx.SELECT);
       obj.setLifted(true);
       obj.setDepth(20);
     });
@@ -255,7 +255,7 @@ class GameScene extends Phaser.Scene {
     this.sfx.whistle();
     this.clearHint();
     const s = this.sprites[m.id];
-    s.setGlow(true);
+    s.setGlow(true, GlowFx.HINT);
     this.hintSprite = s;
     // ghost showing where it should go
     const target = s.centreFor(this.board.pos[m.id] + m.delta);
