@@ -3,13 +3,14 @@
  * Plays 10 traffic jams picked from the level bank. The lot is 6×6 at first;
  * the last levels use 7×7 and 8×8 lots with more vehicles and blockers.
  *
- * Drag a vehicle along its lane; it snaps to whole cells. A slide of any
+ * Swipe a vehicle (or tap it, then tap where it should go, or use the arrow
+ * keys) and it drives along its lane: see VehicleControls. A slide of any
  * length is one move. Cows, barricades and sabzi carts never move.
  * The level is solved when the school van reaches the gate on the right:
  * the gate swings open and the van drives into school.
  *
- * Sounds: engine and exhaust when a vehicle moves, a thud when it hits
- * something, that vehicle's own horn when it can't move at all, a moo /
+ * Sounds: a whoosh for a swipe, engine and exhaust as a vehicle pulls away,
+ * a tyre screech as it brakes, a thud when it can't go that way, that vehicle's own horn when it can't move at all, a moo /
  * clank / cart bell for blockers, the constable's whistle for hints, and the
  * van's horn plus the school bell on a win. A street ambience loops.
  */
@@ -46,7 +47,7 @@ class GameScene extends Phaser.Scene {
     this.hud = new HudBar(this, this.total);
     this.cop = new CopTip(this);
     this.createButtons();
-    this.setupDrag();
+    this.controls = new VehicleControls(this);
     this.levelIndex = 0;
     this.starsTotal = 0;
     this.sprites = [];
@@ -85,8 +86,8 @@ class GameScene extends Phaser.Scene {
     this.B = B;
     this.undoStack = [];
     this.busy = false;
-    this.drag = null;
     this.attemptMoves = 0;
+    this.controls.reset();
 
     this.metrics.beginLevel(this.levelIndex + 1, this.record, slot);
     this.hud.setLevel(this.levelIndex, this.total, this.metrics.session.levels);
@@ -122,92 +123,61 @@ class GameScene extends Phaser.Scene {
     return v.id === 0 ? 12 : (v.fixed ? 9 : 10);
   }
 
-  // ---------------------------------------------------------------- dragging
+  // ---------------------------------------------------------------- feedback (called by VehicleControls)
 
-  setupDrag() {
-    this.input.on('gameobjectdown', (pointer, obj) => {
-      if (this.busy || !(obj instanceof VehicleSprite)) return;
-      const v = obj.vehicle;
-      if (v.fixed) {
-        // blockers just make their sound
-        this.sfx.blocker(v.kind);
-        obj.say(VehicleSprite.SAYS[v.kind] || '!');
-        obj.bump();
-        this.cop.say(GameScene.BLOCKER_TIPS[v.kind] || 'That never moves. Plan around it.', true);
-        return;
-      }
-      const r = this.board.range(v.id);
-      this.drag = {
-        sprite: obj, id: v.id, horiz: v.horiz, start: v.horiz ? obj.x : obj.y,
-        pointer0: v.horiz ? pointer.x : pointer.y, back: r.back, fwd: r.fwd, moved: false, hit: false
-      };
-      obj.setGlow(true, GlowFx.SELECT);
-      obj.setLifted(true);
-      obj.setDepth(20);
-    });
-    this.input.on('pointermove', pointer => {
-      const d = this.drag;
-      if (!d) return;
-      const cell = this.B.cell;
-      const raw = (d.horiz ? pointer.x : pointer.y) - d.pointer0;
-      const off = Math.max(-d.back * cell, Math.min(d.fwd * cell, raw));
-      if (Math.abs(off) > 4 && !d.moved) {
-        d.moved = true;
-        this.sfx.engine(d.sprite.vehicle.kind);
-        d.sprite.puff(2);
-      }
-      // pushed into something: one thud per drag
-      if (!d.hit && Math.abs(raw - off) > cell * 0.35 && (d.back + d.fwd) > 0) {
-        d.hit = true;
-        this.sfx.bump();
-      }
-      if (d.horiz) d.sprite.x = d.start + off; else d.sprite.y = d.start + off;
-    });
-    const release = () => {
-      const d = this.drag;
-      if (!d) return;
-      this.drag = null;
-      d.sprite.setGlow(false);
-      d.sprite.setLifted(false);
-      d.sprite.setDepth(this.restDepth(d.sprite.vehicle));
-      const cell = this.B.cell;
-      const now = d.horiz ? d.sprite.x : d.sprite.y;
-      const delta = Math.round((now - d.start) / cell);
-      if (delta === 0) {
-        d.sprite.slideTo(this.board.pos[d.id]);
-        if (d.back === 0 && d.fwd === 0) {
-          // completely boxed in: it honks
-          const kind = d.sprite.vehicle.kind;
-          this.metrics.blocked();
-          this.sfx.horn(kind);
-          d.sprite.say(VehicleSprite.SAYS[kind] || 'HONK!');
-          d.sprite.bump();
-          this.cop.say('That one is boxed in. Free its lane first!', true);
-        }
-        return;
-      }
-      this.commitMove(d.id, delta);
-    };
-    this.input.on('pointerup', release);
-    this.input.on('pointerupoutside', release);
+  /** Cows, barricades and carts just make their sound. */
+  tapBlocker(sp) {
+    const v = sp.vehicle;
+    this.sfx.blocker(v.kind);
+    sp.say(VehicleSprite.SAYS[v.kind] || '!');
+    sp.bump();
+    this.cop.say(GameScene.BLOCKER_TIPS[v.kind] || 'That never moves. Plan around it.', true);
   }
 
-  /** Apply a slide (from a drag, or from the test hooks). */
+  /** Completely boxed in: it honks. */
+  boxedIn(sp) {
+    const kind = sp.vehicle.kind;
+    this.metrics.blocked();
+    this.sfx.horn(kind);
+    sp.say(VehicleSprite.SAYS[kind] || 'HONK!');
+    sp.bump();
+    this.cop.say('That one is boxed in. Free its lane first!', true);
+  }
+
+  /** Swiped towards something that is in the way. */
+  blockedSwipe(sp) {
+    this.metrics.blocked();
+    this.sfx.bump();
+    this.sfx.horn(sp.vehicle.kind, 0.45);
+    sp.bump();
+    this.cop.say('Something is in the way. Try the other direction, or move the blocker first.', true);
+  }
+
+  /** Swiped sideways across its lane. */
+  wrongWay(sp) {
+    sp.bump();
+    this.sfx.bump();
+    this.cop.say(sp.vehicle.horiz ? 'This one only drives left and right.' : 'This one only drives up and down.', true);
+  }
+
+  /** Apply a slide (from swipe, tap, keyboard or the test hooks) and drive the vehicle there. */
   commitMove(id, delta) {
     const before = this.board.clone();
     if (!this.board.move(id, delta)) {
       this.sprites[id].placeAt(this.board.pos[id]);
       return false;
     }
+    this.controls.reset();
     this.undoStack.push(before);
     this.metrics.move();
     this.attemptMoves++;
     this.updateMoves();
     const s = this.sprites[id];
     this.sfx.engine(s.vehicle.kind);
-    s.puff(3);
     this.busy = true;
-    s.slideTo(this.board.pos[id], () => {
+    s.setDepth(20);
+    s.driveTo(this.board.pos[id], cells => this.sfx.brake(cells), () => {
+      s.setDepth(this.restDepth(s.vehicle));
       this.busy = false;
       this.clearHint();
       if (this.board.isSolved()) this.levelSolved();
@@ -218,6 +188,7 @@ class GameScene extends Phaser.Scene {
 
   undo() {
     if (this.busy || !this.undoStack.length) return;
+    this.controls.reset();
     this.board = this.undoStack.pop();
     this.metrics.undo();
     this.sfx.tap();
@@ -227,6 +198,7 @@ class GameScene extends Phaser.Scene {
 
   restart() {
     if (this.busy) return;
+    this.controls.reset();
     this.board = JamBoard.fromLevel(this.record);
     this.undoStack = [];
     this.attemptMoves = 0;
@@ -254,21 +226,13 @@ class GameScene extends Phaser.Scene {
     const m = res.moves[0];
     this.sfx.whistle();
     this.clearHint();
-    const s = this.sprites[m.id];
-    s.setGlow(true, GlowFx.HINT);
-    this.hintSprite = s;
-    // ghost showing where it should go
-    const target = s.centreFor(this.board.pos[m.id] + m.delta);
-    const ghost = this.add.image(target.x, target.y, s.vehicle.kind).setAlpha(0.4).setDepth(9);
-    ghost.setDisplaySize(s.img.displayWidth, s.img.displayHeight);
-    if (!s.vehicle.horiz) ghost.setAngle(90);
-    this.hintGhost = ghost;
-    this.cop.say('Wheeet! Slide the glowing vehicle to the faded spot.');
+    // select the vehicle in green and preview its best move: Enter or a tap on the lane drives it
+    this.controls.showHint(this.sprites[m.id], m.delta);
+    this.cop.say('Wheeet! Drive the green vehicle to the faded spot. Swipe it, or tap the spot.');
   }
 
   clearHint() {
-    if (this.hintSprite) { this.hintSprite.setGlow(false); this.hintSprite = null; }
-    if (this.hintGhost) { this.hintGhost.destroy(); this.hintGhost = null; }
+    // the hint lives in the controls' selection, which every move or cancel clears
   }
 
   offerSkip() {
@@ -278,7 +242,7 @@ class GameScene extends Phaser.Scene {
 
   skip() {
     if (this.busy) return;
-    this.clearHint();
+    this.controls.reset();
     const result = this.metrics.endLevel({ solved: false, skipped: true, stars: 0 });
     this.difficulty.update(result);
     this.showComplete(result);

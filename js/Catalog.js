@@ -102,8 +102,9 @@ Catalog.GAMES = [
     url: 'autoout/index.html',
     howTo: [
       'Choose your class (3–8). Each session has 10 traffic jams.',
-      'Drag a vehicle along its lane. It can only move forward or back, never turn or move sideways.',
-      'A slide of any length counts as one move. Buses, trucks and tankers are 3 cells long.',
+      'Swipe a vehicle along its lane and it drives off. A quick flick drives it as far as it can go.',
+      'Or tap a vehicle, then tap one of its glowing spots. On a computer you can also use the arrow keys and Enter.',
+      'Vehicles only drive forward or back, never sideways. A drive of any length is one move.',
       'Cows, police barricades and sabzi carts never move. Tap them to hear them, then plan around them.',
       'Get the yellow school van through the gate in as few moves as possible. Undo, Restart and Hint are there if you get stuck.',
       'The last jams use bigger lots: up to 7×7 in Class 3–5 and 8×8 in Class 6–8.'

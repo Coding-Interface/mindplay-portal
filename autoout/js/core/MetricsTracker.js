@@ -11,7 +11,7 @@
  *  optimal          shortest possible solution
  *  efficiency       optimal / moves (1.0 = perfect plan)
  *  deadEnds         always 0 here (every slide can be reversed); kept so reports match the other games
- *  restarts, undos, hints, blockedAttempts (dragged a vehicle that could not move)
+ *  restarts, undos, hints, blockedAttempts (tried to move a vehicle that could not go that way)
  *
  * Output:
  *  - window event 'cognitive-metrics' (detail = payload) after every level and at the end

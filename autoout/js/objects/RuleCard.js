@@ -54,13 +54,23 @@ class RuleCard {
       }).setOrigin(0.5, 0).setDepth(102));
     });
 
-    this.items.push(scene.add.text(W / 2, 520, info.text, {
+    const desktop = info.desktop && !RuleCard.isTouch();
+    this.items.push(scene.add.text(W / 2, desktop ? 498 : 520, info.text, {
       fontFamily: font, fontSize: '25px', color: C.textDim, align: 'center', wordWrap: { width: 860 }
     }).setOrigin(0.5).setDepth(102));
+    if (desktop) {
+      this.items.push(scene.add.text(W / 2, 551, info.desktop, {
+        fontFamily: font, fontSize: '21px', color: '#ffd23f', align: 'center', fontStyle: '700', wordWrap: { width: 860 }
+      }).setOrigin(0.5).setDepth(102));
+    }
 
-    const btn = new TextButton(scene, W / 2, 604, 'Got it!', () => this.close(), { width: 240, height: 64, fontSize: 30 });
+    const btn = new TextButton(scene, W / 2, 610, 'Got it!', () => this.close(), { width: 240, height: 64, fontSize: 30 });
     btn.setDepth(103);
     this.items.push(btn);
+  }
+
+  static isTouch() {
+    return (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0;
   }
 
   close() {
@@ -79,7 +89,8 @@ RuleCard.RULES = {
       { key: 'auto', caption: 'Vehicles slide forward or back', arrows: true, vertical: true },
       { key: 'bus', caption: 'Buses, trucks and tankers are 3 cells long', scale: 0.6 }
     ],
-    text: 'Drag a vehicle along its lane. It can never turn or move sideways. A slide of any length is one move.'
+    text: 'Swipe a vehicle along its lane and it drives off (a quick flick goes all the way). Or tap it, then tap a glowing spot. A drive of any length is one move.',
+    desktop: 'On a computer: click a vehicle, then a glowing spot  ·  or arrow keys + Enter'
   },
   blockers: {
     title: 'Some things never move',

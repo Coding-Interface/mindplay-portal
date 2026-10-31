@@ -54,6 +54,9 @@ class SoundFX {
     this.play(SoundFX.BLOCKER[kind] || 'bump', 0.75, 400);
   }
 
+  /** Tyre screech as a vehicle brakes (louder for longer drives). */
+  brake(cells) { this.play('brake', Math.min(0.7, 0.25 + (cells || 1) * 0.1), 120, 0.9 + Math.random() * 0.2); }
+  whoosh() { this.play('whoosh', 0.45, 80); }
   tap() { this.play('tap', 0.6); }
   bump() { this.play('bump', 0.7, 150); }
   blocked() { this.play('bump', 0.6, 150); }
@@ -80,5 +83,5 @@ SoundFX.BLOCKER = { cow: 'moo', barricade: 'clank', cart: 'cart_bell' };
 SoundFX.KEYS = [
   'horn_van', 'horn_auto', 'horn_car', 'horn_hatch', 'horn_sedan', 'horn_taxi', 'horn_tempo', 'horn_bus', 'horn_truck', 'horn_tanker',
   'engine_light', 'engine_car', 'engine_heavy', 'moo', 'clank', 'cart_bell', 'whistle', 'bump', 'tap',
-  'school_bell', 'chime', 'hint', 'ambience'
+  'school_bell', 'chime', 'hint', 'ambience', 'brake', 'whoosh'
 ];

@@ -34,7 +34,7 @@ class SummaryScene extends Phaser.Scene {
       ['Planning score', s.planningScore + '%', 'how close to the best plan'],
       ['Perfect plans', s.perfectPlans + ' / ' + s.levelsPlayed, 'solved in the fewest moves'],
       ['Think time', (s.avgPlanningTimeMs / 1000).toFixed(1) + ' s', 'before the first move'],
-      ['Blocked tries', String(s.totalBlocked), 'dragged a boxed-in vehicle']
+      ['Blocked tries', String(s.totalBlocked), 'tried to move a stuck vehicle']
     ];
     tiles.forEach((t, i) => {
       const x = W / 2 + (i - 1.5) * 290;

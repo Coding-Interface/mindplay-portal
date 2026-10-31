@@ -4,7 +4,7 @@
  * the front on the right; vertical vehicles are rotated 90° (front pointing down).
  * Knows its lane and converts between lane position and pixels for the
  * current lot (cell size changes with the lot size).
- * Has a soft shadow cast to the bottom-right, a game-style glow for drags and hints,
+ * Has a soft shadow cast to the bottom-right, a game-style glow when selected and for hints,
  * exhaust puffs when it moves, and a comic speech bubble ("PEEP PEEP!").
  */
 class VehicleSprite extends Phaser.GameObjects.Container {
@@ -71,6 +71,67 @@ class VehicleSprite extends Phaser.GameObjects.Container {
   }
 
   /**
+   * Drive to a lane position like a real vehicle: it pulls away (body
+   * stretches a little, exhaust puffs), runs a touch past the spot, then
+   * brakes back with a bounce and a puff of tyre dust.
+   * onBrake(cells) fires as it starts braking (for the screech), done() at rest.
+   */
+  driveTo(pos, onBrake, done) {
+    const v = this.vehicle;
+    const c = this.centreFor(pos);
+    const axis = v.horiz ? 'x' : 'y';
+    const from = this[axis];
+    const to = v.horiz ? c.x : c.y;
+    const dir = Math.sign(to - from);
+    const cells = Math.abs(to - from) / this.cell;
+    if (!dir) { if (done) done(); return; }
+    const over = Math.min(7, this.cell * 0.09);
+    const dur = Math.min(640, 200 + cells * 90);
+    const s = this.scene;
+    // body stretch while pulling away (the art's length is always its local x)
+    s.tweens.killTweensOf([this.img, this.flash]);
+    this.img.setScale(this.baseScaleX, this.baseScaleY);
+    this.flash.setScale(this.baseScaleX, this.baseScaleY);
+    s.tweens.add({
+      targets: [this.img, this.flash], scaleX: this.baseScaleX * 1.06, scaleY: this.baseScaleY * 0.96,
+      duration: dur * 0.45, yoyo: true, ease: 'Sine.easeOut'
+    });
+    this.puff(3, dir);
+    s.tweens.add({
+      targets: this, [axis]: to + dir * over, duration: dur, ease: 'Cubic.easeInOut',
+      onComplete: () => {
+        if (onBrake) onBrake(cells);
+        this.dust(dir);
+        s.tweens.add({ targets: this, [axis]: to, duration: 170, ease: 'Back.easeOut', onComplete: () => done && done() });
+      }
+    });
+  }
+
+  /** Puff of tyre dust at the front when braking. */
+  dust(dir) {
+    const v = this.vehicle;
+    const half = (v.len * this.cell) / 2;
+    const fx = v.horiz ? this.x + dir * half : this.x;
+    const fy = v.horiz ? this.y : this.y + dir * half;
+    for (let i = 0; i < 4; i++) {
+      const side = (i % 2 ? 1 : -1) * this.cell * 0.3;
+      const p = this.scene.add.image(fx + (v.horiz ? 0 : side), fy + (v.horiz ? side : 0), 'puff')
+        .setDepth(this.depth + 1).setAlpha(0.55).setScale(0.3).setTint(0xd9cbb0);
+      this.scene.tweens.add({
+        targets: p, x: p.x + (v.horiz ? dir * 14 : side * 0.3), y: p.y + (v.horiz ? side * 0.3 : dir * 14),
+        scale: 0.9, alpha: 0, duration: 420, delay: i * 40, onComplete: () => p.destroy()
+      });
+    }
+  }
+
+  /** Light hover highlight for mouse users (ignored while glowing). */
+  setHover(on) {
+    if (this.glowTweens) return;
+    this.flash.setVisible(on);
+    if (on) this.flash.setTintFill(0xffffff).setAlpha(0.16);
+  }
+
+  /**
    * Game-style highlight. color: GlowFx.SELECT (gold, picked up) or GlowFx.HINT (green).
    */
   setGlow(on, color) {
@@ -88,7 +149,7 @@ class VehicleSprite extends Phaser.GameObjects.Container {
     ];
   }
 
-  /** Lift slightly while being dragged. */
+  /** Lift slightly (kept for custom controls; driving uses driveTo). */
   setLifted(on) {
     const k = on ? 1.06 : 1;
     this.scene.tweens.add({ targets: [this.img, this.flash], scaleX: this.baseScaleX * k, scaleY: this.baseScaleY * k, duration: 90 });
@@ -106,19 +167,20 @@ class VehicleSprite extends Phaser.GameObjects.Container {
     });
   }
 
-  /** Exhaust puffs from the back of the vehicle. */
-  puff(count) {
+  /** Exhaust puffs from the back of the vehicle (dir: direction of travel, default forward). */
+  puff(count, dir) {
     if (this.vehicle.fixed) return;
     const v = this.vehicle;
+    const d = dir || 1;
     const half = (v.len * this.cell) / 2;
-    const bx = v.horiz ? this.x - half : this.x;
-    const by = v.horiz ? this.y : this.y - half;
+    const bx = v.horiz ? this.x - d * half : this.x;
+    const by = v.horiz ? this.y : this.y - d * half;
     for (let i = 0; i < (count || 3); i++) {
       const p = this.scene.add.image(bx, by, 'puff').setDepth(this.depth - 1).setAlpha(0.7).setScale(0.4);
       this.scene.tweens.add({
         targets: p,
-        x: bx + (v.horiz ? -18 - i * 10 : (Math.random() - 0.5) * 20),
-        y: by + (v.horiz ? (Math.random() - 0.5) * 20 : -18 - i * 10),
+        x: bx + (v.horiz ? -d * (18 + i * 10) : (Math.random() - 0.5) * 20),
+        y: by + (v.horiz ? (Math.random() - 0.5) * 20 : -d * (18 + i * 10)),
         scale: 1.3 + i * 0.3, alpha: 0, duration: 650 + i * 120, delay: i * 70,
         onComplete: () => p.destroy()
       });
